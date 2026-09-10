@@ -7,6 +7,23 @@ from orders.models import Order
 logger = logging.getLogger(__name__)
 
 
+def refund_order(order_id: str) -> Order:
+    """Refund a shipped order and return the updated order.
+
+    Raises KeyError if the order is unknown, ValueError if it isn't shipped
+    (only shipped orders can be refunded — cancel pending orders instead).
+    """
+    order = store.get(order_id)
+    if order is None:
+        raise KeyError(f"unknown order: {order_id}")
+    if order.status != "shipped":
+        raise ValueError(f"cannot refund a {order.status} order")
+    order.status = "refunded"
+    store.save(order)
+    logger.info("refunded order %s (%.2f USD)", order_id, order.total_usd)
+    return order
+
+
 def cancel_order(order_id: str) -> Order:
     """Cancel a pending order and return the updated order.
 
